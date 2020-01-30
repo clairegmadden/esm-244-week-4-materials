@@ -1,80 +1,68 @@
-# This is an awesome introduction to making a Shiny app: https://deanattali.com/blog/building-shiny-apps-tutorial/
 
-# And here are a bunch of tutorials and examples: https://shiny.rstudio.com/tutorial/
+#My first app example!
 
-# Here are some cool examples of what you can do with Shiny: https://shiny.rstudio.com/gallery/
 
-# Step 1. Create a new project.
-# Step 2. Open a new R Script.
-# Step 3. Add the following lines of code:
-
-# library(shiny)
-# library(shinydashboard)
-# ui <- fluidPage()
-# server <- function(input, output) {}
-# shinyApp(ui = ui, server = server)
-
-# Then start building from there:
-
-# Here I'm attaching the necessary packages:
-library(tidyverse)
+# attach packages
 library(shiny)
-library(shinydashboard)
+library(tidyverse)
+library(here)
 
-# Reading in data from my working directory:
-penguins <- read_csv("penguins.csv")
+# read in penguins.csv
 
-# Creating the user interface
+penguins <- read_csv(here("session_4_ex_1", "penguins.csv"))
+
+
+# create the 'ui' = user interface
+# fluidPage() = user interface will update based on changes to the size of the browswer page
+# if you want choices to appear differently than how they are stored in the dataset, within choices = c("what you want to show up" = "exactly how it is stored in the data")
 ui <- fluidPage(
-  titlePanel("I am adding a title!"), # This is the title!
-  sidebarLayout( # Adding a sidebar & main panel
-    sidebarPanel("put my widgets here",
-                 radioButtons(inputId = "species", label = "Choose penguin species", choices = c("Adelie","Gentoo","Cool Chinstrap Penguins!" = "Chinstrap"), # This is my first widget for penguins species
-                 ),
-                 selectInput(inputId = "pt_color", label = "Select point color", choices = c("Awesome red!" = "red", "Pretty purple" = "purple", "ORAAANGE" = "orange"))
-                 ),
-    mainPanel("put my graph here", # Adding things to the main panel
-              plotOutput(outputId = "penguin_plot"),
-              tableOutput(outputId = "penguin_table")
-              )
+  titlePanel("This is my awesome title!"),
+  sidebarLayout(
+    sidebarPanel("Here are my widgets!",
+                 # add some radio buttons to the widget sidepanel
+                 radioButtons(inputId = "species",
+                              label = "Choose penguin species:",
+                              choices = c("Adelie", "Gentoo", "Chinstrap")),
+                 # add a dropdown menu 
+                 selectInput(inputId = "pt_color", 
+                             label = "Select a point color!",
+                             choices = c("RAD RED" = "red",
+                                         "PRETTY PURPLE" = "purple",
+                                         "ORAAAANGE!" = "orange"))),
+    mainPanel("Here is my graph!",
+              # add reactive graph we made in the server here
+              plotOutput(outputId = "penguin_plot"))
   )
-)
+) 
 
-# Building the server:
-server <- function(input, output) {
 
+# create the 'server' = behind the scenes stuff, anything that happens in the server has to go within {}
+server <- function(input, output){
+  # create a reactive data frame:
   penguin_select <- reactive({
-
-    penguins %>%
+    penguins %>% 
       filter(sp_short == input$species)
-
   })
-
-  penguin_table <- reactive({
-    penguins %>%
-    filter(sp_short == input$species) %>%
-    group_by(sex) %>%
-    summarize(
-      mean_flip = mean(flipper_length_mm),
-      mean_mass = mean(body_mass_g)
-    )
-  })
-
-  # Create a reactive plot, which depends on 'species' widget selection:
+  # create an output called pengiun_plot
   output$penguin_plot <- renderPlot({
-
-
-
-    ggplot(data = penguin_select(), aes(x = flipper_length_mm, y = body_mass_g)) +
+    # when referencing a reactive dataframe, you have to have () at the end of the name
+    # once in the reactive renderPlot, can code things like you would normally
+    ggplot(data = penguin_select(), aes(x = flipper_length_mm, y = body_mass_g))+
+      # add geometry and then set color based on dropdown menu set up in ui
       geom_point(color = input$pt_color)
-
+    
   })
-
-  output$penguin_table <- renderTable({
-
-    penguin_table()
-
-  })
-
+  
 }
+
+
+# let R know that we want to combine the user interface and the server into an app:
 shinyApp(ui = ui, server = server)
+
+
+
+
+
+
+
+
